@@ -1,0 +1,15 @@
+{
+  "name": "hospital-management-system",
+  "version": "2.0.0",
+  "description": "Professional MERN Stack Hospital Management System",
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
+    "seed": "cd backend && node utils/seeder.js",
+    "start:backend": "cd backend && npm start",
+    "start:frontend": "cd frontend && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
