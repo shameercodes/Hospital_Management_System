@@ -118,6 +118,7 @@ export default function AppointmentModal({ appointment, onClose, onSaved }) {
                 }
               </div>
             </div>
+
             <div className="row2">
               <div className="fg">
                 <label className="lbl">Type</label>
@@ -132,6 +133,7 @@ export default function AppointmentModal({ appointment, onClose, onSaved }) {
                 </select>
               </div>
             </div>
+
             <div className="fg"><label className="lbl">Chief Complaint</label><input className="inp" value={form.chiefComplaint || ''} onChange={e => set('chiefComplaint', e.target.value)} placeholder="Main reason for visit" /></div>
             <div className="fg"><label className="lbl">Symptoms (comma-separated)</label><input className="inp" value={form.symptoms || ''} onChange={e => set('symptoms', e.target.value)} placeholder="fever, headache, cough" /></div>
           </div>
@@ -141,6 +143,7 @@ export default function AppointmentModal({ appointment, onClose, onSaved }) {
           </div>
         </form>
       </div>
+      
     </div>
   )
 }
