@@ -65,6 +65,7 @@ export default function AuditLog() {
                   : items.map(it => (
                     <React.Fragment key={it._id}>
                       <tr>
+                        
                         <td style={{ fontSize: 12, color: 'var(--text-2)', whiteSpace: 'nowrap' }}>{formatDate(it.createdAt)} · {new Date(it.createdAt).toLocaleTimeString()}</td>
                         <td>
                           <div style={{ fontSize: 13, fontWeight: 500 }}>{it.actor?.name || '—'}</div>
@@ -89,6 +90,7 @@ export default function AuditLog() {
                               </div>
                             )}
                             <details>
+
                               <summary style={{ fontSize: 12, cursor: 'pointer', color: 'var(--text-2)' }}>Snapshot</summary>
                               <pre style={{ fontSize: 11, marginTop: 6, maxHeight: 280, overflow: 'auto', background: '#0b1220', color: '#cbd5e1', padding: 10, borderRadius: 6 }}>
                                 {JSON.stringify(it.snapshot, null, 2)}
@@ -98,6 +100,7 @@ export default function AuditLog() {
                               User-Agent: <span className="mono">{it.userAgent || '—'}</span>
                             </div>
                           </td>
+
                         </tr>
                       )}
                     </React.Fragment>
