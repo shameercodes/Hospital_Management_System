@@ -91,10 +91,12 @@ export default function Appointments() {
                           {isAdmin() && <button className="btn btn-sm btn-danger" onClick={() => handleDelete(a)} title="Permanently delete">Delete</button>}
                         </div>
                       </td>
+
                     </tr>
                   ))
               }
             </tbody>
+            
           </table>
         </div>
       </div>
