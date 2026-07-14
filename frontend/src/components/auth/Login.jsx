@@ -40,9 +40,11 @@ export default function Login() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 48 }}>
           <div style={{ width: 44, height: 44, background: '#0f6fff', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🏥</div>
           <div>
+
             <div style={{ fontSize: 17, fontWeight: 700 }}>{import.meta.env.VITE_HOSPITAL_NAME || 'City Medical Center'}</div>
             <div style={{ fontSize: 11, opacity: .5 }}>Hospital Management System v2.0</div>
           </div>
+
         </div>
         <h1 style={{ fontSize: 34, fontWeight: 800, lineHeight: 1.2, marginBottom: 14 }} className="login-hero-title">
           Modern Healthcare<br />Management Platform
@@ -60,6 +62,7 @@ export default function Login() {
             <span>{f.icon}</span><span style={{ fontSize: 13 }}>{f.text}</span>
           </div>
         ))}
+        
       </div>
 
       {/* Right — form */}
