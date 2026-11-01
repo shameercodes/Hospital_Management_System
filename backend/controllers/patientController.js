@@ -49,10 +49,28 @@ exports.getPatient = asyncHandler(async (req, res) => {
   res.json({ success: true, data: patient });
 });
 
+function sanitizePatientBody(body) {
+  const data = { ...body };
+  delete data._id;
+  delete data.__v;
+  delete data.patientId;
+  delete data.createdAt;
+  delete data.updatedAt;
+  delete data.age;
+  delete data.fullName;
+  if (!data.bloodGroup) data.bloodGroup = 'unknown';
+  if (!data.email) delete data.email;
+  if (data.emergencyContact && !data.emergencyContact.relationship) {
+    delete data.emergencyContact.relationship;
+  }
+  return data;
+}
+
 // @route POST /api/patients
 exports.createPatient = asyncHandler(async (req, res) => {
-  req.body.registeredBy = req.user.id;
-  const patient = await Patient.create(req.body);
+  const data = sanitizePatientBody(req.body);
+  data.registeredBy = req.user.id;
+  const patient = await Patient.create(data);
   res.status(201).json({ success: true, data: patient });
 });
 
@@ -60,7 +78,9 @@ exports.createPatient = asyncHandler(async (req, res) => {
 exports.updatePatient = asyncHandler(async (req, res) => {
   let patient = await Patient.findById(req.params.id);
   if (!patient) { res.status(404); throw new Error('Patient not found'); }
-  patient = await Patient.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+  const data = sanitizePatientBody(req.body);
+  delete data.registeredBy;
+  patient = await Patient.findByIdAndUpdate(req.params.id, data, { new: true, runValidators: true });
   res.json({ success: true, data: patient });
 });
 

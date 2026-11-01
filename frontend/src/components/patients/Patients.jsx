@@ -6,7 +6,8 @@ import toast from 'react-hot-toast'
 import PatientModal from './PatientModal.jsx'
 
 export default function Patients() {
-  const { isAdmin } = useAuth()
+  const { isAdmin, canWrite } = useAuth()
+  const canAdd = canWrite('admin','doctor','nurse','receptionist')
   const [patients, setPatients] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -50,7 +51,7 @@ export default function Patients() {
     <div>
       <div className="page-head">
         <h2 style={{ fontSize: 17, fontWeight: 700 }}>Patients <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-2)' }}>({total})</span></h2>
-        <button className="btn btn-primary" onClick={() => { setEdit(null); setModal(true) }}>+ Register Patient</button>
+        {canAdd && <button type="button" className="btn btn-primary" onClick={() => { setEdit(null); setModal(true) }}>+ Register Patient</button>}
       </div>
 
       <div className="filters">
@@ -72,7 +73,7 @@ export default function Patients() {
               {loading
                 ? <tr><td colSpan={8} style={{ textAlign: 'center', padding: 32 }}><div className="spin" style={{ margin: '0 auto' }} /></td></tr>
                 : patients.length === 0
-                  ? <tr><td colSpan={8}><div className="empty"><div className="empty-ico">👥</div><h3>No patients found</h3></div></td></tr>
+                  ? <tr><td colSpan={8}><div className="empty"><div className="empty-ico">👥</div><h3>No patients found</h3>{canAdd && <button type="button" className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => { setEdit(null); setModal(true) }}>+ Register Patient</button>}</div></td></tr>
                   : patients.map(p => (
                     <tr key={p._id}>
                       <td><span className="mono" style={{ color: 'var(--primary)' }}>{p.patientId}</span></td>
@@ -89,7 +90,7 @@ export default function Patients() {
                       <td style={{ fontSize: 12, color: 'var(--text-2)' }}>{formatDate(p.createdAt)}</td>
                       <td>
                         <div style={{ display: 'flex', gap: 4 }}>
-                          <button className="btn btn-sm btn-secondary" onClick={() => { setEdit(p); setModal(true) }}>Edit</button>
+                          {canAdd && <button className="btn btn-sm btn-secondary" onClick={() => { setEdit(p); setModal(true) }}>Edit</button>}
                           {isAdmin() && <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p)} title="Permanently delete">Delete</button>}
                         </div>
                       </td>

@@ -17,7 +17,21 @@ export default function PatientModal({ patient, onClose, onSaved }) {
   const handleSubmit = async e => {
     e.preventDefault(); setLoading(true)
     try {
-      const payload = { ...form, chronicConditions: form.chronicConditions ? form.chronicConditions.split(',').map(s => s.trim()).filter(Boolean) : [] }
+      const payload = {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        dateOfBirth: form.dateOfBirth,
+        gender: form.gender,
+        bloodGroup: form.bloodGroup || 'unknown',
+        phone: form.phone,
+        email: form.email || undefined,
+        address: form.address,
+        emergencyContact: form.emergencyContact?.relationship
+          ? form.emergencyContact
+          : { name: form.emergencyContact?.name, phone: form.emergencyContact?.phone },
+        chronicConditions: form.chronicConditions ? String(form.chronicConditions).split(',').map(s => s.trim()).filter(Boolean) : [],
+        notes: form.notes,
+      }
       if (isEdit) await patientAPI.update(patient._id, payload)
       else await patientAPI.create(payload)
       toast.success(isEdit ? 'Patient updated' : 'Patient registered')

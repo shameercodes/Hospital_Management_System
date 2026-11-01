@@ -6,7 +6,8 @@ import { useAuth } from '../../context/AuthContext.jsx'
 import toast from 'react-hot-toast'
 
 export default function Pharmacy() {
-  const { isAdmin } = useAuth()
+  const { isAdmin, canWrite } = useAuth()
+  const canAdd = canWrite('admin', 'pharmacist')
   const [meds, setMeds] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -31,10 +32,24 @@ export default function Pharmacy() {
 
   const handleSave = async form => {
     try {
-      if (editModal?._id) await pharmacyAPI.update(editModal._id, form)
-      else await pharmacyAPI.create(form)
-      toast.success('Saved'); setEditModal(null); load()
-    } catch (err) { toast.error(err.response?.data?.message || 'Failed') }
+      const payload = {
+        name: form.name,
+        genericName: form.genericName,
+        brand: form.brand,
+        category: form.category,
+        strength: form.strength,
+        quantity: Number(form.quantity) || 0,
+        minStockLevel: Number(form.minStockLevel) || 0,
+        sellingPrice: Number(form.sellingPrice) || 0,
+        requiresPrescription: form.requiresPrescription !== false,
+        isActive: form.isActive !== false,
+      }
+      if (form.expiryDate) payload.expiryDate = form.expiryDate
+      if (!payload.name) { toast.error('Medicine name is required'); return }
+      if (editModal?._id) await pharmacyAPI.update(editModal._id, payload)
+      else await pharmacyAPI.create(payload)
+      toast.success(editModal?._id ? 'Medicine updated' : 'Medicine added'); setEditModal(null); load()
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to save medicine') }
   }
 
   const handleStock = async (med, adj) => {
@@ -52,7 +67,7 @@ export default function Pharmacy() {
     <div>
       <div className="page-head">
         <h2 style={{ fontSize: 17, fontWeight: 700 }}>Pharmacy</h2>
-        <button className="btn btn-primary" onClick={() => setEditModal({})}>+ Add Medicine</button>
+        {canAdd && <button type="button" className="btn btn-primary" onClick={() => setEditModal({})}>+ Add Medicine</button>}
       </div>
       <div className="filters">
         <div className="search-wrap" style={{ flex: 1, maxWidth: 280 }}>
@@ -71,7 +86,7 @@ export default function Pharmacy() {
               {loading
                 ? <tr><td colSpan={7} style={{ textAlign: 'center', padding: 32 }}><div className="spin" style={{ margin: '0 auto' }} /></td></tr>
                 : meds.length === 0
-                  ? <tr><td colSpan={7}><div className="empty"><div className="empty-ico">💊</div><h3>No medicines</h3></div></td></tr>
+                  ? <tr><td colSpan={7}><div className="empty"><div className="empty-ico">💊</div><h3>No medicines</h3>{canAdd && <button type="button" className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => setEditModal({})}>+ Add Medicine</button>}</div></td></tr>
                   : meds.map(m => {
                     const expired = m.expiryDate && new Date(m.expiryDate) < new Date()
                     return (
@@ -90,8 +105,8 @@ export default function Pharmacy() {
                         <td>{m.isActive ? <span className="badge badge-success">Active</span> : <span className="badge badge-neutral">Inactive</span>}</td>
                         <td>
                           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                            <button className="btn btn-sm btn-secondary" onClick={() => setStockModal(m)}>Stock</button>
-                            <button className="btn btn-sm btn-secondary" onClick={() => setEditModal(m)}>Edit</button>
+                            {canAdd && <button className="btn btn-sm btn-secondary" onClick={() => setStockModal(m)}>Stock</button>}
+                            {canAdd && <button className="btn btn-sm btn-secondary" onClick={() => setEditModal(m)}>Edit</button>}
                             {isAdmin() && <button className="btn btn-sm btn-danger" onClick={() => handleDelete(m)}>Delete</button>}
                           </div>
                         </td>
@@ -128,7 +143,7 @@ function MedModal({ med, onClose, onSave }) {
           <div className="row3"><div className="fg"><label className="lbl">Strength</label><input className="inp" value={form.strength||''} onChange={e => s('strength', e.target.value)} placeholder="500mg" /></div><div className="fg"><label className="lbl">Quantity</label><input className="inp" type="number" value={form.quantity} onChange={e => s('quantity', +e.target.value)} /></div><div className="fg"><label className="lbl">Min Stock</label><input className="inp" type="number" value={form.minStockLevel} onChange={e => s('minStockLevel', +e.target.value)} /></div></div>
           <div className="row2"><div className="fg"><label className="lbl">Selling Price (Rs.)</label><input className="inp" type="number" value={form.sellingPrice} onChange={e => s('sellingPrice', +e.target.value)} /></div><div className="fg"><label className="lbl">Expiry Date</label><input className="inp" type="date" value={form.expiryDate||''} onChange={e => s('expiryDate', e.target.value)} /></div></div>
         </div>
-        <div className="modal-ft"><button className="btn btn-secondary" onClick={onClose}>Cancel</button><button className="btn btn-primary" onClick={() => onSave(form)}>{isEdit ? 'Save' : 'Add'}</button></div>
+        <div className="modal-ft"><button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button><button type="button" className="btn btn-primary" onClick={() => { if (!form.name) { toast.error('Medicine name is required'); return } onSave(form) }}>{isEdit ? 'Save' : 'Add'}</button></div>
       </div>
     </div>
   )

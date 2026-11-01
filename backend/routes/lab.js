@@ -21,7 +21,7 @@ router.get('/', authorize(...LAB_READERS), asyncHandler(async (req, res) => {
 }));
 
 // Only doctors (orderers) and admins/lab techs (clinical workflow) can create orders.
-router.post('/', authorize('admin','doctor','lab_technician'), asyncHandler(async (req, res) => {
+router.post('/', authorize('admin','doctor','lab_technician','nurse','receptionist'), asyncHandler(async (req, res) => {
   const test = await LabTest.create(req.body);
   res.status(201).json({ success: true, data: test });
 }));

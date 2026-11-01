@@ -59,7 +59,7 @@ export default function Lab() {
               {loading
                 ? <tr><td colSpan={8} style={{ textAlign: 'center', padding: 32 }}><div className="spin" style={{ margin: '0 auto' }} /></td></tr>
                 : tests.length === 0
-                  ? <tr><td colSpan={8}><div className="empty"><div className="empty-ico">🔬</div><h3>No lab tests</h3></div></td></tr>
+                  ? <tr><td colSpan={8}><div className="empty"><div className="empty-ico">🔬</div><h3>No lab tests</h3><button type="button" className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => setOrderModal(true)}>+ Order Test</button></div></td></tr>
                   : tests.map(t => (
                     <tr key={t._id}>
                       <td><span className="mono" style={{ color: 'var(--primary)' }}>{t.testId}</span></td>

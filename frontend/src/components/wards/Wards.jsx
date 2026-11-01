@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { wardAPI } from '../../utils/api.js'
+import { WARD_TYPES } from '../../utils/helpers.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import toast from 'react-hot-toast'
 
@@ -10,6 +11,7 @@ export default function Wards() {
   const [wards, setWards] = useState([])
   const [loading, setLoading] = useState(true)
   const [sel, setSel] = useState(null)
+  const [modal, setModal] = useState(false)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -32,11 +34,15 @@ export default function Wards() {
   const totalBeds    = wards.reduce((s, w) => s + (w.totalBeds || 0), 0)
   const occupiedBeds = wards.reduce((s, w) => s + (w.occupiedBeds || 0), 0)
 
-  if (loading) return <div className="spin-wrap"><div className="spin" /></div>
-
   return (
     <div>
-      <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 18 }}>Wards & Bed Management</h2>
+      <div className="page-head">
+        <h2 style={{ fontSize: 17, fontWeight: 700 }}>Wards & Bed Management</h2>
+        {isAdmin() && <button type="button" className="btn btn-primary" onClick={() => setModal(true)}>+ Add Ward</button>}
+      </div>
+      {loading && <div className="spin-wrap"><div className="spin" /></div>}
+      {!loading && (
+      <>
       <div className="g4" style={{ marginBottom: 18 }}>
         {[['Total Beds', totalBeds, '#3b82f6', '#eff6ff'], ['Occupied', occupiedBeds, '#f59e0b', '#fffbeb'], ['Available', totalBeds - occupiedBeds, '#10b981', '#ecfdf5'], ['Occupancy', totalBeds ? `${Math.round((occupiedBeds/totalBeds)*100)}%` : '0%', '#8b5cf6', '#f5f3ff']].map(([l,v,c,bg]) => (
           <div className="card" key={l} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -94,6 +100,65 @@ export default function Wards() {
             : <div className="empty"><div className="empty-ico">🏥</div><p>Select a ward</p></div>
           }
         </div>
+      </div>
+      </>
+      )}
+      {modal && <WardModal onClose={() => setModal(false)} onSaved={() => { setModal(false); load() }} />}
+    </div>
+  )
+}
+
+function WardModal({ onClose, onSaved }) {
+  const [form, setForm] = useState({ name: '', wardNumber: '', type: 'general', floor: 1, totalBeds: 10, description: '' })
+  const [loading, setLoading] = useState(false)
+  const s = (f, v) => setForm(p => ({ ...p, [f]: v }))
+
+  const handleSubmit = async e => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      await wardAPI.create({
+        name: form.name,
+        wardNumber: form.wardNumber,
+        type: form.type,
+        floor: Number(form.floor) || 1,
+        totalBeds: Number(form.totalBeds) || 1,
+        description: form.description,
+      })
+      toast.success('Ward added')
+      onSaved()
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to add ward')
+    } finally { setLoading(false) }
+  }
+
+  return (
+    <div className="overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-hd"><h3 style={{ fontWeight: 700, fontSize: 15 }}>Add Ward</h3><button className="close-btn" onClick={onClose}>×</button></div>
+        <form onSubmit={handleSubmit}>
+          <div className="modal-body">
+            <div className="row2">
+              <div className="fg"><label className="lbl">Ward Name *</label><input className="inp" value={form.name} onChange={e => s('name', e.target.value)} required placeholder="General Ward A" /></div>
+              <div className="fg"><label className="lbl">Ward Number *</label><input className="inp" value={form.wardNumber} onChange={e => s('wardNumber', e.target.value)} required placeholder="W-101" /></div>
+            </div>
+            <div className="row3">
+              <div className="fg">
+                <label className="lbl">Type *</label>
+                <select className="inp" value={form.type} onChange={e => s('type', e.target.value)}>
+                  {WARD_TYPES.map(t => <option key={t} value={t} style={{ textTransform: 'capitalize' }}>{t}</option>)}
+                </select>
+              </div>
+              <div className="fg"><label className="lbl">Floor</label><input className="inp" type="number" min="0" value={form.floor} onChange={e => s('floor', e.target.value)} /></div>
+              <div className="fg"><label className="lbl">Beds *</label><input className="inp" type="number" min="1" value={form.totalBeds} onChange={e => s('totalBeds', e.target.value)} required /></div>
+            </div>
+            <div className="fg"><label className="lbl">Description</label><input className="inp" value={form.description} onChange={e => s('description', e.target.value)} /></div>
+          </div>
+          <div className="modal-ft">
+            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Saving…' : 'Add Ward'}</button>
+          </div>
+        </form>
       </div>
     </div>
   )

@@ -28,8 +28,8 @@ const DoctorSchema = new mongoose.Schema({
 
 DoctorSchema.pre('save', async function (next) {
   if (!this.doctorId) {
-    const count = await mongoose.model('Doctor').countDocuments();
-    this.doctorId = `DOC-${String(count + 1).padStart(4, '0')}`;
+    const { nextId } = require('../utils/nextId');
+    this.doctorId = await nextId('Doctor', 'doctorId', 'DOC-', 4);
   }
   next();
 });

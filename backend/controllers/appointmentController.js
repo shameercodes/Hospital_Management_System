@@ -61,12 +61,25 @@ exports.createAppointment = asyncHandler(async (req, res) => {
     throw new Error('Invalid doctor — please select a doctor from the list.');
   }
 
-  req.body.bookedBy = req.user.id;
-  if (!req.body.fee) {
-    const doctor = await Doctor.findById(req.body.doctor);
-    if (doctor) req.body.fee = doctor.consultationFee;
-  }
-  const appt = await Appointment.create(req.body);
+  const doctor = await Doctor.findById(req.body.doctor);
+  if (!doctor) { res.status(404); throw new Error('Doctor not found'); }
+
+  const payload = {
+    patient: req.body.patient,
+    doctor: req.body.doctor,
+    date: req.body.date,
+    timeSlot: req.body.timeSlot,
+    type: req.body.type || 'consultation',
+    priority: req.body.priority || 'normal',
+    chiefComplaint: req.body.chiefComplaint,
+    symptoms: Array.isArray(req.body.symptoms)
+      ? req.body.symptoms
+      : (req.body.symptoms ? String(req.body.symptoms).split(',').map(s => s.trim()).filter(Boolean) : []),
+    notes: req.body.notes,
+    bookedBy: req.user.id,
+    fee: req.body.fee || doctor.consultationFee,
+  };
+  const appt = await Appointment.create(payload);
   res.status(201).json({ success: true, data: appt });
 });
 
@@ -116,9 +129,15 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
   const doctor = await Doctor.findById(doctorId);
   if (!doctor) { res.status(404); throw new Error('Doctor not found'); }
 
-  // 'lowercase' isn't a valid Intl option. Use 'long' (e.g. "Monday") then lowercase.
-  const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-  const daySchedule = doctor.schedule.find(s => s.day === dayName && s.isAvailable);
+  const [yy, mm, dd] = String(date).split('-').map(Number);
+  const localDate = new Date(yy, (mm || 1) - 1, dd || 1);
+  const dayName = localDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+  let daySchedule = (doctor.schedule || []).find(s => s.day === dayName && s.isAvailable);
+
+  // New doctors may have no weekly schedule yet — still offer a default clinic day.
+  if (!daySchedule && (!(doctor.schedule || []).length || doctor.schedule.every(s => !s.isAvailable))) {
+    daySchedule = { startTime: '09:00', endTime: '17:00' };
+  }
 
   if (!daySchedule) return res.json({ success: true, data: [] });
 
@@ -136,8 +155,8 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
   }
 
   // Remove booked slots
-  const startOfDay = new Date(date); startOfDay.setHours(0,0,0,0);
-  const endOfDay   = new Date(date); endOfDay.setHours(23,59,59,999);
+  const startOfDay = new Date(yy, (mm || 1) - 1, dd || 1, 0, 0, 0, 0);
+  const endOfDay   = new Date(yy, (mm || 1) - 1, dd || 1, 23, 59, 59, 999);
   const booked = await Appointment.find({
     doctor: doctorId,
     date: { $gte: startOfDay, $lte: endOfDay },

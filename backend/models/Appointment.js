@@ -41,8 +41,8 @@ const AppointmentSchema = new mongoose.Schema({
 
 AppointmentSchema.pre('save', async function (next) {
   if (!this.appointmentId) {
-    const count = await mongoose.model('Appointment').countDocuments();
-    this.appointmentId = `APT-${String(count + 1).padStart(6, '0')}`;
+    const { nextId } = require('../utils/nextId');
+    this.appointmentId = await nextId('Appointment', 'appointmentId', 'APT-', 6);
   }
   next();
 });

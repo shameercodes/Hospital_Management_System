@@ -47,7 +47,7 @@ export default function Billing() {
               {loading
                 ? <tr><td colSpan={8} style={{ textAlign: 'center', padding: 32 }}><div className="spin" style={{ margin: '0 auto' }} /></td></tr>
                 : invoices.length === 0
-                  ? <tr><td colSpan={8}><div className="empty"><div className="empty-ico">💳</div><h3>No invoices</h3></div></td></tr>
+                  ? <tr><td colSpan={8}><div className="empty"><div className="empty-ico">💳</div><h3>No invoices</h3><button type="button" className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => setCreateModal(true)}>+ Create Invoice</button></div></td></tr>
                   : invoices.map(inv => (
                     <tr key={inv._id}>
                       <td><span className="mono" style={{ color: 'var(--primary)' }}>{inv.invoiceNumber}</span></td>

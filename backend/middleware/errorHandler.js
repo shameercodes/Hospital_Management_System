@@ -2,10 +2,13 @@ const errorHandler = (err, req, res, next) => {
   let statusCode = res.statusCode === 200 ? 500 : res.statusCode;
   let message = err.message;
 
-  // Mongoose bad ObjectId
+  // Mongoose bad ObjectId / bad type (empty date strings, etc.)
   if (err.name === 'CastError') {
-    statusCode = 404;
-    message = `Resource not found`;
+    const empty = err.value === '' || err.value == null;
+    statusCode = empty ? 400 : 404;
+    message = empty
+      ? `Invalid value for ${err.path || 'field'}`
+      : 'Resource not found';
   }
   // Mongoose duplicate key
   if (err.code === 11000) {

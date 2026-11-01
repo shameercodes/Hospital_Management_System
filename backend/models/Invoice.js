@@ -57,9 +57,10 @@ const InvoiceSchema = new mongoose.Schema({
 
 InvoiceSchema.pre('save', async function (next) {
   if (!this.invoiceNumber) {
-    const count = await mongoose.model('Invoice').countDocuments();
+    const { nextId } = require('../utils/nextId');
     const d = new Date();
-    this.invoiceNumber = `INV-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}-${String(count+1).padStart(5,'0')}`;
+    const prefix = `INV-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}-`;
+    this.invoiceNumber = await nextId('Invoice', 'invoiceNumber', prefix, 5);
   }
   this.amountPaid = this.payments.reduce((s, p) => s + p.amount, 0);
   this.balance = this.grandTotal - this.amountPaid - (this.insurance?.coveredAmount || 0);

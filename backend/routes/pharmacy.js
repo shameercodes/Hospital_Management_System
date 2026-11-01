@@ -7,10 +7,30 @@ const { protect, authorize } = require('../middleware/auth');
 
 router.use(protect);
 
+function sanitizeMedicine(body) {
+  const data = { ...body };
+  delete data._id;
+  delete data.__v;
+  delete data.isLowStock;
+  delete data.isExpiringSoon;
+  delete data.createdAt;
+  delete data.updatedAt;
+  if (!data.expiryDate) delete data.expiryDate;
+  if (!data.manufactureDate) delete data.manufactureDate;
+  if (data.sellingPrice === '' || data.sellingPrice == null) data.sellingPrice = 0;
+  return data;
+}
+
 router.get('/', asyncHandler(async (req, res) => {
-  let query = { isActive: true };
+  let query = {};
+  if (req.query.includeInactive !== 'true') query.isActive = true;
   if (req.query.search) {
-    query.$text = { $search: req.query.search };
+    const s = req.query.search;
+    query.$or = [
+      { name: { $regex: s, $options: 'i' } },
+      { genericName: { $regex: s, $options: 'i' } },
+      { brand: { $regex: s, $options: 'i' } },
+    ];
   }
   if (req.query.category) query.category = req.query.category;
   if (req.query.lowStock === 'true') query.$expr = { $lte: ['$quantity', '$minStockLevel'] };
@@ -23,12 +43,14 @@ router.get('/', asyncHandler(async (req, res) => {
 }));
 
 router.post('/', authorize('admin','pharmacist'), asyncHandler(async (req, res) => {
-  const medicine = await Medicine.create(req.body);
+  const data = sanitizeMedicine(req.body);
+  if (!data.name) { res.status(400); throw new Error('Medicine name is required'); }
+  const medicine = await Medicine.create(data);
   res.status(201).json({ success: true, data: medicine });
 }));
 
 router.put('/:id', authorize('admin','pharmacist'), asyncHandler(async (req, res) => {
-  const medicine = await Medicine.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  const medicine = await Medicine.findByIdAndUpdate(req.params.id, sanitizeMedicine(req.body), { new: true, runValidators: true });
   if (!medicine) { res.status(404); throw new Error('Medicine not found'); }
   res.json({ success: true, data: medicine });
 }));

@@ -37,8 +37,8 @@ const LabTestSchema = new mongoose.Schema({
 
 LabTestSchema.pre('save', async function (next) {
   if (!this.testId) {
-    const count = await mongoose.model('LabTest').countDocuments();
-    this.testId = `LAB-${String(count + 1).padStart(6, '0')}`;
+    const { nextId } = require('../utils/nextId');
+    this.testId = await nextId('LabTest', 'testId', 'LAB-', 6);
   }
   next();
 });

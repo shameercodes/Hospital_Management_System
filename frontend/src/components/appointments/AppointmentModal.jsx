@@ -43,7 +43,16 @@ export default function AppointmentModal({ appointment, onClose, onSaved }) {
 
     setLoading(true)
     try {
-      const payload = { ...form, symptoms: form.symptoms ? (typeof form.symptoms === 'string' ? form.symptoms.split(',').map(s => s.trim()).filter(Boolean) : form.symptoms) : [] }
+      const payload = {
+        patient: form.patient,
+        doctor: form.doctor,
+        date: form.date,
+        timeSlot: form.timeSlot,
+        type: form.type,
+        priority: form.priority,
+        chiefComplaint: form.chiefComplaint,
+        symptoms: form.symptoms ? (typeof form.symptoms === 'string' ? form.symptoms.split(',').map(s => s.trim()).filter(Boolean) : form.symptoms) : [],
+      }
       if (isEdit) await appointmentAPI.update(appointment._id, payload)
       else await appointmentAPI.create(payload)
       toast.success(isEdit ? 'Appointment updated' : 'Appointment booked')
@@ -113,8 +122,11 @@ export default function AppointmentModal({ appointment, onClose, onSaved }) {
                   ? <div className="inp" style={{ color: 'var(--text-3)' }}>Loading slots…</div>
                   : <select className="inp" value={form.timeSlot} onChange={e => set('timeSlot', e.target.value)} required>
                       <option value="">Select Slot</option>
-                      {slots.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
+                    {slots.map(s => <option key={s} value={s}>{s}</option>)}
+                    {form.doctor && form.date && !loadingSlots && slots.length === 0 && (
+                      <option value="" disabled>No slots this day — try another date</option>
+                    )}
+                  </select>
                 }
               </div>
             </div>

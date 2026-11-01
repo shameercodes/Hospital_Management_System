@@ -25,12 +25,29 @@ router.get('/:id', asyncHandler(async (req, res) => {
   res.json({ success: true, data: doctor });
 }));
 
+const DEFAULT_SCHEDULE = ['monday','tuesday','wednesday','thursday','friday','saturday'].map(day => ({
+  day, startTime: '09:00', endTime: '17:00', maxPatients: 20, isAvailable: true
+}));
+
 router.post('/', authorize('admin'), asyncHandler(async (req, res) => {
   const { name, email, password, phone, department, ...doctorData } = req.body;
+  if (!name || !email || !password) {
+    res.status(400); throw new Error('Name, email and password are required');
+  }
+  if (!doctorData.specialization) { res.status(400); throw new Error('Specialization is required'); }
+  if (!doctorData.licenseNumber) { res.status(400); throw new Error('License number is required'); }
   const user = await User.create({ name, email, password, phone, role: 'doctor', department });
   doctorData.user = user._id;
-  const doctor = await Doctor.create(doctorData);
-  res.status(201).json({ success: true, data: { doctor, user } });
+  doctorData.department = doctorData.department || department;
+  if (!doctorData.schedule || !doctorData.schedule.length) doctorData.schedule = DEFAULT_SCHEDULE;
+  if (doctorData.consultationFee == null) doctorData.consultationFee = 500;
+  try {
+    const doctor = await Doctor.create(doctorData);
+    res.status(201).json({ success: true, data: { doctor, user } });
+  } catch (err) {
+    await User.findByIdAndDelete(user._id);
+    throw err;
+  }
 }));
 
 // Permanently delete a doctor + their User record (admin only).

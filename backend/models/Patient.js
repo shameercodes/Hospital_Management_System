@@ -73,11 +73,10 @@ const PatientSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true }
 }, { timestamps: true });
 
-// Auto-generate patient ID
 PatientSchema.pre('save', async function (next) {
   if (!this.patientId) {
-    const count = await mongoose.model('Patient').countDocuments();
-    this.patientId = `PAT-${String(count + 1).padStart(6, '0')}`;
+    const { nextId } = require('../utils/nextId');
+    this.patientId = await nextId('Patient', 'patientId', 'PAT-', 6);
   }
   next();
 });
